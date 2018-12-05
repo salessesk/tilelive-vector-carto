@@ -1,0 +1,23 @@
+{
+  "name": "tilelive-vector-carto",
+  "version": "0.0.1",
+  "description": "accept vector tiles with cartocss",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/salessesk/tilelive-vector-carto.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/salessesk/tilelive-vector-carto/issues"
+  },
+  "homepage": "https://github.com/salessesk/tilelive-vector-carto#readme",
+  "dependencies": {
+    "async": "^2.6.1",
+    "carto": "github:mapbox/carto"
+  }
+}
