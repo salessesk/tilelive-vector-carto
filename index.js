@@ -1,14 +1,17 @@
 "use strict";
 
-var url = require("url");
-var carto = require("carto");
-var async = require("async");
+var url = require("url"),
+  carto = require("carto"),
+  async = require("async"),
+  fs = require("fs"),
+  yaml = require("js-yaml"),
+  path = require("path");
 
-var PREFIX = "vector-carto";
+var PREFIX = "vector-carto:";
 
 module.exports = function(tilelive, options) {
   var VectorCarto = function(uri, callback) {
-    uri = url.parse(clone(uri), true);
+    uri = url.parse(uri, true);
 
     uri.protocol = uri.protocol.replace(PREFIX, "");
 
@@ -24,7 +27,7 @@ module.exports = function(tilelive, options) {
       }
 
       try {
-        mml = JSON.parse(mml);
+        mml = yaml.safeLoad(mml);
       } catch (e) {
         return callback(e);
       }
@@ -52,24 +55,51 @@ module.exports = function(tilelive, options) {
 
         mml.Stylesheet = styles;
 
-        var xml;
-        var source = mml.Layer[0].Datasource.file;
-        delete mml.Layer[0].Datasource;
-
-        try {
-          xml = new carto.Renderer().render(mml);
-        } catch (err) {
-          if (Array.isArray(err)) {
-            err.forEach(function(e) {
-              // TODO what's this?
-              carto.writeError(e, options);
-            });
-          } else {
-            return callback(err);
-          }
+        var source = url.parse(mml.vectorfile, true);
+        // case when no / is used
+        if (source.pathname === null) {
+          source = source.protocol + '//' + path.join(path.dirname(filename), source.hostname);
         }
+        delete mml.vectorfile;
 
-        return new tilelive.protocols["vector:"]({ xml: xml, source: source }, callback);
+        new tilelive.protocols["vector:"].Backend({uri: source}, function(err, backend) {
+          if (err) return callback(err);
+          if (!backend._vector_layers) return callback(new Error('source must contain a vector_layers property'));
+
+          // populate mml with backend source data
+          mml.name = backend._source._info.name;
+          mml.description = backend._source._info.description;
+          mml.bounds = backend._source._info.bounds;
+          mml.center = backend._source._info.center;
+          mml.maxzoom = backend._source._info.maxzoom;
+          mml.minzoom = backend._source._info.minzoom;
+
+          mml.Layer = backend._vector_layers.map(function(vl) {
+            return {id: vl.id};
+          });
+
+          var xml;
+          try {
+            xml = new carto.Renderer().render(mml);
+          } catch (err) {
+            if (Array.isArray(err)) {
+              err.forEach(function(e) {
+                // TODO what's this?
+                carto.writeError(e, options);
+              });
+            } else {
+              return callback(err);
+            }
+          }
+
+          new tilelive.protocols["vector:"]({
+              xml: xml.data,
+              backend: backend
+          }, function(err, source) {
+            if (err) return callback(err);
+            return callback(null, source);
+          });
+        });
       });
     });
   };
