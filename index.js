@@ -67,12 +67,12 @@ module.exports = function(tilelive, options) {
           if (!backend._vector_layers) return callback(new Error('source must contain a vector_layers property'));
 
           // populate mml with backend source data
-          mml.name = backend._source._info.name;
-          mml.description = backend._source._info.description;
-          mml.bounds = backend._source._info.bounds;
-          mml.center = backend._source._info.center;
-          mml.maxzoom = backend._source._info.maxzoom;
-          mml.minzoom = backend._source._info.minzoom;
+          mml.name = mml.name || backend._source._info.name;
+          mml.description = mml.description || backend._source._info.description;
+          mml.bounds = mml.bounds || backend._source._info.bounds;
+          mml.center = mml.center || backend._source._info.center;
+          mml.maxzoom = mml.maxzoom || backend._source._info.maxzoom;
+          mml.minzoom = mml.minzoom || backend._source._info.minzoom;
 
           mml.Layer = backend._vector_layers.map(function(vl) {
             return {id: vl.id};
