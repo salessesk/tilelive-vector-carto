@@ -5,9 +5,13 @@ var url = require("url"),
   async = require("async"),
   fs = require("fs"),
   yaml = require("js-yaml"),
+  mapnik = require("mapnik"),
   path = require("path");
 
 var PREFIX = "vector-carto:";
+
+// ensure mapnik as fonts available
+mapnik.register_system_fonts();
 
 module.exports = function(tilelive, options) {
   var VectorCarto = function(uri, callback) {
